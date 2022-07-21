@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use App\Models\KetegoriBarang;
 
 class Barang extends Model
 {
@@ -14,6 +15,6 @@ class Barang extends Model
     public $timestamps = false;
     public function kategori_barang()
     {
-        return $this->belongsTo(KategoriBarang::class, 'kategori_barang_id', 'id');
+        return $this->belongsTo(KetegoriBarang::class, 'kategori_barang_id', 'id');
     }
 }
