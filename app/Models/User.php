@@ -24,4 +24,5 @@ class User extends Authenticatable
     {
         return $this->hasOne(DetailUser::class, 'user_id', 'id');
     }
+
 }
