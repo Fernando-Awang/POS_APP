@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\DetailUser;
 use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
@@ -19,6 +20,10 @@ class userSeeder extends Seeder
             'username' => 'owner1',
             'password' => Hash::make('123'),
             'role' => 'owner',
+        ]);
+        $dataDetailUser = DetailUser::create([
+            'id_user' => $dataUser->id,
+            'nama' => 'Owner 1',
         ]);
     }
 }
