@@ -19,7 +19,7 @@ class TabelDetailUser extends Migration
             $table->string('nama');
             $table->text('alamat')->nullable();
             $table->char('telp', 20)->nullable();
-            $table->foreign('id_user')->references('id')->on('user');
+            $table->foreign('id_user')->references('id')->on('users');
         });
     }
 

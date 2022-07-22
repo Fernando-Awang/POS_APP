@@ -20,7 +20,7 @@ class TabelBarang extends Migration
             $table->integer('harga_jual')->nullable();
             $table->integer('harga_beli')->nullable();
             $table->integer('stok')->nullable();
-            $table->foreign('id_kategori_barang')->references('id')->on('kategori_barang');
+            $table->foreign('id_kategori_barang')->references('id')->on('kategori_barang')->cascadeOnDelete();
         });
     }
 

@@ -5,15 +5,11 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class Barang extends Model
+class Pelanggan extends Model
 {
     use HasFactory;
-    protected $table = 'barang';
+    protected $table = 'pelanggan';
     protected $primaryKey = 'id';
     protected $guarded = [];
     public $timestamps = false;
-    public function kategori_barang()
-    {
-        return $this->belongsTo(KetegoriBarang::class, 'kategori_barang_id', 'id');
-    }
 }
