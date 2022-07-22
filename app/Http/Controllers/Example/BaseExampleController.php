@@ -66,6 +66,7 @@ class BaseExampleController extends Controller
             return responseJson(false, 'validasi error', $validasi['message'], 500);
         }
         $data = $request->except('_token');
+        // $data = $request->all($this->fillableMainModel);
         DB::beginTransaction();
         try {
             $this->mainModel->create($data);
@@ -99,6 +100,7 @@ class BaseExampleController extends Controller
             return responseJson(false, 'validasi error', $validasi['message'], 500);
         }
         $data = $request->except('_token');
+        // $data = $request->all($this->fillableMainModel);
         DB::beginTransaction();
         try {
             $findData->update($data);
