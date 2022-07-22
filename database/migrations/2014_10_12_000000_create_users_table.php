@@ -17,7 +17,8 @@ class CreateUsersTable extends Migration
             $table->id();
             $table->string('username')->unique();
             $table->string('password');
-            $table->enum('role', ['owner', 'staff']);
+            $table->enum('role', ['owner', 'staff'])->nullable();
+            $table->enum('status', ['aktif', 'nonaktif'])->default('aktif');
         });
     }
 
