@@ -15,27 +15,6 @@ function userId()
 {
     return auth()->user()->id;
 }
-function transactionStatus($status)
-{
-    $transaction_status = [
-        'pending' => 'Menunggu',
-        'confirmed' => 'Dikonfirmasi',
-        'cancelled' => 'Dibatalkan',
-        'shipped' => 'Dikirim',
-        'received' => 'Diterima',
-        'finish' => 'Selesai',
-    ];
-    return $transaction_status[$status];
-}
-function paymentStatus($status)
-{
-    $payment_status = [
-        'paid' => 'Dibayar',
-        'unpaid' => 'Menunggu Pembayaran',
-        'expired' => 'Kadaluarsa',
-    ];
-    return $payment_status[$status];
-}
 function formatRupiah($val)
 {
     return 'Rp. ' . number_format($val, 0, ',', '.');
