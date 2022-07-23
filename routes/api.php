@@ -6,6 +6,7 @@ use App\Http\Controllers\Backend\KategoriBarangController;
 use App\Http\Controllers\Backend\PelangganController;
 use App\Http\Controllers\Backend\SupplierController;
 use App\Http\Controllers\Backend\UserController;
+use App\Http\Controllers\TestController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -29,5 +30,6 @@ Route::middleware('auth:sanctum')->group(function(){
     Route::resource('supplier', SupplierController::class)->except('create', 'edit');
     Route::resource('pelanggan', PelangganController::class)->except('create', 'edit');
     Route::resource('user', UserController::class)->except('create', 'edit');
+    Route::get('test', [TestController::class, 'index']);
 });
 
