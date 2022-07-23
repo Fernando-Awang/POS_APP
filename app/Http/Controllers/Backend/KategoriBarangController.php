@@ -10,16 +10,13 @@ use Illuminate\Support\Facades\Validator;
 class KategoriBarangController extends Controller
 {
     private $mainModel;
-    private $detailModel;
     private $fillableMainModel;
-    private $fillableDetailModel;
     public function __construct()
     {
         $this->mainModel = new \App\Models\KetegoriBarang();
         $this->fillableMainModel = [
             'nama',
         ];
-        $this->fillableDetailModel = [];
     }
     private function getAllMainModel()
     {
@@ -28,10 +25,6 @@ class KategoriBarangController extends Controller
     private function getOneMainModel($condition)
     {
         return $this->mainModel->where($condition);
-    }
-    private function getAllDetailModel($condition)
-    {
-        return $this->detailModel->where($condition);
     }
     private function validasiInput($request, $type = 'store')
     {

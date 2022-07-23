@@ -23,7 +23,6 @@ class BarangController extends Controller
             'harga_beli',
             'stok',
         ];
-        $this->fillableDetailModel = [];
     }
     private function getAllMainModel()
     {
@@ -33,16 +32,15 @@ class BarangController extends Controller
     {
         return $this->mainModel->where($condition);
     }
-    private function getAllDetailModel($condition)
-    {
-        return $this->detailModel->where($condition);
-    }
     private function validasiInput($request, $type = 'store')
     {
         $validate = [];
         $result['status'] = false;
         if ($type == 'store') {
+            $validate['id_kategori_barang'] = 'required';
             $validate['nama'] = 'required';
+            $validate['harga_jual'] = 'required';
+            $validate['harga_beli'] = 'required';
         }
         if ($type == 'update') {
         }
