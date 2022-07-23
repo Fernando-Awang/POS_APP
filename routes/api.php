@@ -4,6 +4,7 @@ use App\Http\Controllers\Backend\BarangController;
 use App\Http\Controllers\Backend\KategoriBarangController;
 use App\Http\Controllers\Backend\PelangganController;
 use App\Http\Controllers\Backend\SupplierController;
+use App\Http\Controllers\Backend\UserController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -25,4 +26,5 @@ Route::resource('kategori-barang', KategoriBarangController::class)->except('cre
 Route::resource('barang', BarangController::class)->except('create', 'edit');
 Route::resource('supplier', SupplierController::class)->except('create', 'edit');
 Route::resource('pelanggan', PelangganController::class)->except('create', 'edit');
+Route::resource('user', UserController::class)->except('create', 'edit');
 
