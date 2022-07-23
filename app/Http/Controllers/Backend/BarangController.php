@@ -26,11 +26,11 @@ class BarangController extends Controller
     }
     private function getAllMainModel()
     {
-        return $this->mainModel;
+        return $this->mainModel->with('kategori_barang');
     }
     private function getOneMainModel($condition)
     {
-        return $this->mainModel->where($condition);
+        return $this->mainModel->where($condition)->with('kategori_barang');
     }
     private function validasiInput($request, $type = 'store')
     {
