@@ -66,8 +66,14 @@ class KategoriBarangController extends Controller
         if (!$validasi['status']) {
             return responseJson(false, 'validasi error', $validasi['message'], 500);
         }
-        // $data = $request->except('_token');
-        $data = $request->all($this->fillableMainModel);
+        // $dataRequest = $request->except('_token');
+        $dataRequest = $request->all($this->fillableMainModel);
+        $data = [];
+        foreach ($dataRequest as $key => $value) {
+            if ($value != null && $value != '') {
+                $data[$key] = $value;
+            }
+        }
         DB::beginTransaction();
         try {
             $this->mainModel->create($data);
@@ -100,8 +106,14 @@ class KategoriBarangController extends Controller
         if (!$validasi['status']) {
             return responseJson(false, 'validasi error', $validasi['message'], 500);
         }
-        // $data = $request->except('_token');
-        $data = $request->all($this->fillableMainModel);
+        // $dataRequest = $request->except('_token');
+        $dataRequest = $request->all($this->fillableMainModel);
+        $data = [];
+        foreach ($dataRequest as $key => $value) {
+            if ($value != null && $value != '') {
+                $data[$key] = $value;
+            }
+        }
         DB::beginTransaction();
         try {
             $findData->update($data);
