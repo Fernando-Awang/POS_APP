@@ -113,7 +113,9 @@ class PelangganController extends Controller
         }
         DB::beginTransaction();
         try {
-            $findData->update($data);
+            if (count($data) > 0) {
+                $findData->update($data);
+            }
             DB::commit();
             return responseJson(true, 'Data berhasil diubah!');
         } catch (\Exception $e) {
