@@ -89,6 +89,7 @@ class UserController extends Controller
                 $dataMain[$key] = $value;
             }
         }
+        $dataMain['password'] = Hash::make($dataMain['password']);
         // detail_user > detail
         $dataRequestDetail = $request->all($this->fillableDetailModel);
         $dataDetail = [];
