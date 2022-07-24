@@ -2,6 +2,8 @@
 
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\Backend\BarangController;
+use App\Http\Controllers\Backend\BarangMasukController;
+use App\Http\Controllers\Backend\DetailBarangMasukController;
 use App\Http\Controllers\Backend\KategoriBarangController;
 use App\Http\Controllers\Backend\PelangganController;
 use App\Http\Controllers\Backend\SupplierController;
@@ -25,11 +27,13 @@ Route::get('unauthorize', function(){
 })->name('login');
 Route::post('login', [AuthController::class, 'login'])->name('auth');
 Route::middleware('auth:sanctum')->group(function(){
+    Route::get('test', [TestController::class, 'index']);
     Route::resource('kategori-barang', KategoriBarangController::class)->except('create', 'edit');
     Route::resource('barang', BarangController::class)->except('create', 'edit');
     Route::resource('supplier', SupplierController::class)->except('create', 'edit');
     Route::resource('pelanggan', PelangganController::class)->except('create', 'edit');
     Route::resource('user', UserController::class)->except('create', 'edit');
-    Route::get('test', [TestController::class, 'index']);
+    Route::resource('barang-masuk', BarangMasukController::class)->except('create', 'edit');
+    Route::resource('detail-barang-masuk', DetailBarangMasukController::class)->except('create', 'edit');
 });
 
