@@ -11,10 +11,11 @@ class DetailBarangMasukController extends Controller
 {
     private $mainModel;
     private $fillableMainModel;
+    private $modelkategoriBarang;
     public function __construct()
     {
-        $this->mainModel = new \App\Models\BarangMasuk();
-        $this->detailModel = new \App\Models\DetailBarangMasuk();
+        $this->mainModel = new \App\Models\DetailBarangMasuk();
+        $this->modelkategoriBarang = new \App\Models\KetegoriBarang();
         $this->fillableMainModel = [
             'id_barang_masuk',
             'id_barang',
@@ -23,9 +24,13 @@ class DetailBarangMasukController extends Controller
             'subtotal',
         ];
     }
-    private function getAllMainModel()
+    private function getAllMainModel($condition = null)
     {
-        return $this->mainModel;
+        $data =  $this->mainModel->with('barang');
+        if ($condition != null) {
+            $data = $data->where($condition);
+        }
+        return $data;
     }
     private function getOneMainModel($condition)
     {
@@ -50,8 +55,9 @@ class DetailBarangMasukController extends Controller
         $validate = [];
         $result['status'] = false;
         if ($type == 'store') {
-            $validate['id_barang_masuk'] = 'required';
             $validate['id_barang'] = 'required';
+            $validate['jumlah'] = 'required';
+            $validate['harga_satuan'] = 'required';
         }
         if ($type == 'update') {
         }
@@ -70,42 +76,25 @@ class DetailBarangMasukController extends Controller
     private function mapShowAllData($data)
     {
         return collect($data)->map(function($var){
-            $var->total = $var->detail_barang_masuk->sum('subtotal');
-            $var->total_format = formatRupiah($var->total);
-            $var->tanggal_format = formatDateDMYHI($var->tanggal);
-            $var->nama_supplier = $var->supplier->nama;
-            $var->nama_user = $this->findUser($var->id_user)->nama;
-            unset($var->detail_barang_masuk);
-            unset($var->supplier);
+            $var->nama_barang = $var->barang->nama;
+            $var->kategori_barang = $this->findKategoriBarang($var->barang->id_kategori_barang)->nama;
+            $var->subtotal_format = formatRupiah($var->subtotal);
+            unset($var->barang);
             return $var;
         });
     }
-    private function mapShowDetailData($data)
+    private function findKategoriBarang($id_kategori_barang)
     {
-        return collect($data)->map(function($var){
-            $var->total = $var->detail_barang_masuk->sum('subtotal');
-            $var->total_format = formatRupiah($var->total);
-            $var->tanggal_format = formatDateDMYHI($var->tanggal);
-            $var->nama_supplier = $var->supplier->nama;
-            $var->nama_user = $this->findUser($var->id_user)->nama;
-            $var->detail_barang_masuk->map(function($item){
-                $item->nama_barang = $this->findBarang($item->id_barang)->nama;
-                $item->harga_satuan_format = formatRupiah($item->harga_satuan);
-                $item->subtotal_format = formatRupiah($item->subtotal);
-                unset($item->id_barang_masuk);
-                return $item;
-            });
-            unset($var->supplier);
-            return $var;
-        });
+        return $this->modelkategoriBarang->where('id', $id_kategori_barang)->first();
     }
     // ==================== crud function ======================================================
-    public function index()
+    public function index($id_barang_masuk)
     {
-        $data = $this->getAllMainModel()->get();
+        $data = $this->getAllMainModel(['id_barang_masuk' => $id_barang_masuk])->get();
+        $data = $this->mapShowAllData($data);
         return responseJson(true, 'data list', $data);
     }
-    public function store(Request $request)
+    public function store($id_barang_masuk, Request $request)
     {
         $validasi = $this->validasiInput($request);
         if (!$validasi['status']) {
@@ -120,6 +109,7 @@ class DetailBarangMasukController extends Controller
             }
         }
         $dataMain['subtotal'] = $dataMain['jumlah'] * $dataMain['harga_satuan'];
+        $dataMain['id_barang_masuk'] = $id_barang_masuk;
         DB::beginTransaction();
         try {
             $detailBarangMasuk = $this->mainModel->create($dataMain);
@@ -130,7 +120,7 @@ class DetailBarangMasukController extends Controller
             return responseJson(false, 'Data gagal ditambahkan!', $e->getMessage(), 500);
         }
     }
-    public function show($id)
+    public function show($id_barang_masuk, $id)
     {
         $condition = ['id' => $id];
         $findData = $this->getOneMainModel($condition);
@@ -138,11 +128,15 @@ class DetailBarangMasukController extends Controller
         if (!isset($result->id)) {
             return responseJson(false, 'Data tidak ditemukan', null, 404);
         }
+        $result  = $this->mapShowAllData($findData->get())->first();
         return responseJson(true, 'data', $result);
     }
-    public function update(Request $request, $id)
+    public function update($id_barang_masuk, Request $request, $id)
     {
-        $condition = ['id' => $id];
+        $condition = [
+            'id_barang_masuk' => $id_barang_masuk,
+            'id' => $id
+        ];
         $findData = $this->getOneMainModel($condition);
         $result = $findData->first();
         if (!isset($result->id)) {
@@ -156,6 +150,15 @@ class DetailBarangMasukController extends Controller
                 $dataMain[$key] = $value;
             }
         }
+        $harga_satuan = $result->harga_satuan;
+        $jumlah = $result->jumlah;
+        if (isset($dataMain['harga_satuan'])) {
+            $harga_satuan = $dataMain['harga_satuan'];
+        }
+        if (isset($dataMain['jumlah'])) {
+            $jumlah = $dataMain['jumlah'];
+        }
+        $dataMain['subtotal'] = $harga_satuan * $jumlah;
         DB::beginTransaction();
         try {
             if (count($dataMain) > 0) {
@@ -168,9 +171,12 @@ class DetailBarangMasukController extends Controller
             return responseJson(false, 'Data gagal diubah!', $e->getMessage(), 500);
         }
     }
-    public function destroy($id)
+    public function destroy($id_barang_masuk, $id)
     {
-        $condition = ['id' => $id];
+        $condition = [
+            'id_barang_masuk' => $id_barang_masuk,
+            'id' => $id
+        ];
         $findData = $this->getOneMainModel($condition);
         $result = $findData->first();
         if (!isset($result->id)) {
@@ -178,11 +184,6 @@ class DetailBarangMasukController extends Controller
         }
         DB::beginTransaction();
         try {
-            $detail = $this->getAllDetailModel(['id_barang_masuk' => $id]);
-            $dataDetail = $detail->get();
-            if(count($dataDetail) > 0){
-                $detail->delete();
-            }
             $findData->delete();
             DB::commit();
             return responseJson(true, 'Data berhasil dihapus!');

@@ -34,6 +34,6 @@ Route::middleware('auth:sanctum')->group(function(){
     Route::resource('pelanggan', PelangganController::class)->except('create', 'edit');
     Route::resource('user', UserController::class)->except('create', 'edit');
     Route::resource('barang-masuk', BarangMasukController::class)->except('create', 'edit');
-    Route::resource('detail-barang-masuk', DetailBarangMasukController::class)->except('create', 'edit');
+    Route::resource('barang-masuk/{id_barang_masuk}/detail', DetailBarangMasukController::class)->except('create', 'edit');
 });
 
