@@ -155,38 +155,9 @@ class DetailPenjualanController extends Controller
                     $dataMain[$key] = $value;
                 }
             }
-            $dataBarang = $this->findBarang($result->id_barang);
-            $harga_satuan = $dataBarang->harga_jual;
             $jumlah = $result->jumlah;
             $status = 'add';
             $diff = 0;
-            if (isset($dataMain['id_barang'])) {
-                $dataBarang = $this->findBarang($dataMain['id_barang']);
-                $harga_satuan = $dataBarang->harga_jual;
-                $old_id_barang = $result->id_barang;
-                $new_id_barang = $dataMain['id_barang'];
-                if ($old_id_barang != $new_id_barang) {
-                    $this->updateStock($old_id_barang, $result->jumlah, 'add');
-                    $jumlah = $result->jumlah;
-                    if (isset($dataMain['jumlah'])) {
-                        $jumlah = $dataMain['jumlah'];
-                    }
-                    $this->updateStock($new_id_barang, $jumlah, 'add');
-                }
-                if ($old_id_barang == $new_id_barang) {
-                    if (isset($dataMain['jumlah'])) {
-                        $jumlah = $dataMain['jumlah'];
-                        if ($dataMain['jumlah'] > $result->jumlah) {
-                            $diff = $dataMain['jumlah'] - $result->jumlah;
-                            $this->updateStock($old_id_barang, $diff, 'subtract');
-                        }
-                        if ($dataMain['jumlah'] < $result->jumlah) {
-                            $diff = $result->jumlah - $dataMain['jumlah'];
-                            $this->updateStock($old_id_barang, $diff, 'add');
-                        }
-                    }
-                }
-            }
             if (isset($dataMain['jumlah']) && !isset($dataMain['id_barang'])) {
                 $jumlah = $dataMain['jumlah'];
                 $status = 'add';
@@ -199,13 +170,10 @@ class DetailPenjualanController extends Controller
                 }
                 $this->updateStock($result->id_barang, $diff, $status);
             }
-            $dataMain['harga_satuan'] = $harga_satuan;
+            $dataMain['id_barang'] = $result->id_barang;
             $dataMain['subtotal'] = $dataMain['harga_satuan'] * $jumlah;
             if (count($dataMain) > 0) {
                 $detailPenjualan = $findData->update($dataMain);
-                if ($diff != 0) {
-                    $this->updateStock($result->id_barang, $diff, $status);
-                }
             }
             DB::commit();
             return responseJson(true, 'Data berhasil diubah!');
