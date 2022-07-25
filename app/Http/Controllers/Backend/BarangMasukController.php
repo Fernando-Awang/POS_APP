@@ -15,6 +15,7 @@ class BarangMasukController extends Controller
     private $fillableDetailModel;
     private $modelBarang;
     private $modelUser;
+    private $modelkategoriBarang;
     public function __construct()
     {
         $this->mainModel = new \App\Models\BarangMasuk();
@@ -22,6 +23,7 @@ class BarangMasukController extends Controller
         $this->modelBarang = new \App\Models\Barang();
         $this->modelUser = new \App\Models\User();
         $this->modelDetailUser = new \App\Models\DetailUser();
+        $this->modelkategoriBarang = new \App\Models\KetegoriBarang();
         $this->fillableMainModel = [
             'no_faktur',
             'id_user',
@@ -71,6 +73,10 @@ class BarangMasukController extends Controller
     {
         return $this->modelBarang->where('id', $id_barang)->first();
     }
+    private function findKategoriBarang($id_kategori_barang)
+    {
+        return $this->modelkategoriBarang->where('id', $id_kategori_barang)->first();
+    }
     private function validasiInput($request, $type = 'store')
     {
         $validate = [];
@@ -114,7 +120,9 @@ class BarangMasukController extends Controller
             $var->nama_supplier = $var->supplier->nama;
             $var->nama_user = $this->findUser($var->id_user)->nama;
             $var->detail_barang_masuk->map(function($item){
-                $item->nama_barang = $this->findBarang($item->id_barang)->nama;
+                $dataBarang = $this->findBarang($item->id_barang);
+                $item->nama_barang = $dataBarang->nama;
+                $item->kategori_barang = $this->findKategoriBarang($dataBarang->id_kategori_barang)->nama;
                 $item->harga_satuan_format = formatRupiah($item->harga_satuan);
                 $item->subtotal_format = formatRupiah($item->subtotal);
                 unset($item->id_barang_masuk);
