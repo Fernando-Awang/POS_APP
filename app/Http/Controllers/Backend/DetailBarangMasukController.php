@@ -12,10 +12,12 @@ class DetailBarangMasukController extends Controller
     private $mainModel;
     private $fillableMainModel;
     private $modelkategoriBarang;
+    private $modelBarang;
     public function __construct()
     {
         $this->mainModel = new \App\Models\DetailBarangMasuk();
         $this->modelkategoriBarang = new \App\Models\KetegoriBarang();
+        $this->modelBarang = new \App\Models\Barang();
         $this->fillableMainModel = [
             'id_barang_masuk',
             'id_barang',
@@ -36,19 +38,17 @@ class DetailBarangMasukController extends Controller
     {
         return $this->mainModel->where($condition);
     }
-    private function updateStock($request, $status='add')
+    private function updateStock($id_barang, $diff, $status='add')
     {
-        foreach($request as $value){
-            $currentData = $this->modelBarang->where('id', $value['id_barang']);
-            $getCurrentData = $currentData->first();
-            $newStock = $getCurrentData->stok + $value['jumlah'];
-            if ($status != 'add') {
-                $newStock = $getCurrentData->stok - $value['jumlah'];
-            }
-            $currentData->update([
-                'stok' => $newStock,
-            ]);
+        $currentData = $this->modelBarang->where('id', $id_barang);
+        $getCurrentData = $currentData->first();
+        $newStock = $getCurrentData->stok + $diff;
+        if ($status != 'add') {
+            $newStock = $getCurrentData->stok - $diff;
         }
+        $currentData->update([
+            'stok' => $newStock,
+        ]);
     }
     private function validasiInput($request, $type = 'store')
     {
@@ -100,7 +100,6 @@ class DetailBarangMasukController extends Controller
         if (!$validasi['status']) {
             return responseJson(false, 'validasi error', $validasi['message'], 500);
         }
-        // brng_masuk > main
         $dataRequestMain = $request->all($this->fillableMainModel);
         $dataMain = [];
         foreach ($dataRequestMain as $key => $value) {
@@ -113,6 +112,7 @@ class DetailBarangMasukController extends Controller
         DB::beginTransaction();
         try {
             $detailBarangMasuk = $this->mainModel->create($dataMain);
+            $this->updateStock($detailBarangMasuk->id_barang, $detailBarangMasuk->jumlah, 'add');
             DB::commit();
             return responseJson(true, 'Data berhasil ditambahkan!');
         } catch (\Exception $e) {
@@ -152,17 +152,30 @@ class DetailBarangMasukController extends Controller
         }
         $harga_satuan = $result->harga_satuan;
         $jumlah = $result->jumlah;
+        $status = 'add';
+        $diff = 0;
         if (isset($dataMain['harga_satuan'])) {
             $harga_satuan = $dataMain['harga_satuan'];
         }
         if (isset($dataMain['jumlah'])) {
             $jumlah = $dataMain['jumlah'];
+            if ($jumlah < $result->jumlah) {
+                $diff = $result->jumlah - $jumlah;
+                $status = 'remove';
+            }
+            if ($jumlah > $result->jumlah) {
+                $diff = $jumlah - $result->jumlah;
+                $status = 'add';
+            }
         }
         $dataMain['subtotal'] = $harga_satuan * $jumlah;
         DB::beginTransaction();
         try {
             if (count($dataMain) > 0) {
-                $findData->update($dataMain);
+                $detailBarangMasuk = $findData->update($dataMain);
+                if ($diff != 0) {
+                    $this->updateStock($result->id_barang, $diff, $status);
+                }
             }
             DB::commit();
             return responseJson(true, 'Data berhasil diubah!');
@@ -185,6 +198,7 @@ class DetailBarangMasukController extends Controller
         DB::beginTransaction();
         try {
             $findData->delete();
+            $this->updateStock($result->id_barang, $result->jumlah, 'remove');
             DB::commit();
             return responseJson(true, 'Data berhasil dihapus!');
         } catch (\Exception $e) {
