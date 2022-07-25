@@ -43,7 +43,7 @@ class DetailBarangMasukController extends Controller
         $currentData = $this->modelBarang->where('id', $id_barang);
         $getCurrentData = $currentData->first();
         $newStock = $getCurrentData->stok + $diff;
-        if ($status != 'add') {
+        if ($status == 'subtract') {
             $newStock = $getCurrentData->stok - $diff;
         }
         $currentData->update([
@@ -122,7 +122,10 @@ class DetailBarangMasukController extends Controller
     }
     public function show($id_barang_masuk, $id)
     {
-        $condition = ['id' => $id];
+        $condition = [
+            'id_barang_masuk' => $id_barang_masuk,
+            'id' => $id
+        ];
         $findData = $this->getOneMainModel($condition);
         $result = $findData->first();
         if (!isset($result->id)) {
@@ -142,40 +145,50 @@ class DetailBarangMasukController extends Controller
         if (!isset($result->id)) {
             return responseJson(false, 'Data tidak ditemukan', null, 404);
         }
-        // user > main
-        $dataRequestMain = $request->all($this->fillableMainModel);
-        $dataMain = [];
-        foreach ($dataRequestMain as $key => $value) {
-            if ($value != null && $value != '') {
-                $dataMain[$key] = $value;
-            }
-        }
-        $harga_satuan = $result->harga_satuan;
-        $jumlah = $result->jumlah;
-        $status = 'add';
-        $diff = 0;
-        if (isset($dataMain['harga_satuan'])) {
-            $harga_satuan = $dataMain['harga_satuan'];
-        }
-        if (isset($dataMain['jumlah'])) {
-            $jumlah = $dataMain['jumlah'];
-            if ($jumlah < $result->jumlah) {
-                $diff = $result->jumlah - $jumlah;
-                $status = 'remove';
-            }
-            if ($jumlah > $result->jumlah) {
-                $diff = $jumlah - $result->jumlah;
-                $status = 'add';
-            }
-        }
-        $dataMain['subtotal'] = $harga_satuan * $jumlah;
         DB::beginTransaction();
         try {
+            $dataRequestMain = $request->all($this->fillableMainModel);
+            $dataMain = [];
+            foreach ($dataRequestMain as $key => $value) {
+                if ($value != null && $value != '') {
+                    $dataMain[$key] = $value;
+                }
+            }
+            $harga_satuan = $result->harga_satuan;
+            $jumlah = $result->jumlah;
+            $status = 'add';
+            $diff = 0;
+            if (isset($dataMain['harga_satuan'])) {
+                $harga_satuan = $dataMain['harga_satuan'];
+            }
+            if (isset($dataMain['id_barang'])) {
+                $old_id_barang = $result->id_barang;
+                $new_id_barang = $dataMain['id_barang'];
+                if ($old_id_barang != $new_id_barang) {
+                    $this->updateStock($old_id_barang, $result->jumlah, 'add');
+                    $jumlah = $result->jumlah;
+                    if (isset($dataMain['jumlah'])) {
+                        $jumlah = $dataMain['jumlah'];
+                    }
+                    $this->updateStock($new_id_barang, $jumlah, 'add');
+                }
+                if ($old_id_barang == $new_id_barang) {
+                    if (isset($dataMain['jumlah'])) {
+                        $jumlah = $dataMain['jumlah'];
+                        if ($dataMain['jumlah'] > $result->jumlah) {
+                            $diff = $dataMain['jumlah'] - $result->jumlah;
+                            $this->updateStock($old_id_barang, $diff, 'subtract');
+                        }
+                        if ($dataMain['jumlah'] < $result->jumlah) {
+                            $diff = $result->jumlah - $dataMain['jumlah'];
+                            $this->updateStock($old_id_barang, $diff, 'add');
+                        }
+                    }
+                }
+            }
+            $dataMain['subtotal'] = $harga_satuan * $jumlah;
             if (count($dataMain) > 0) {
                 $detailBarangMasuk = $findData->update($dataMain);
-                if ($diff != 0) {
-                    $this->updateStock($result->id_barang, $diff, $status);
-                }
             }
             DB::commit();
             return responseJson(true, 'Data berhasil diubah!');
@@ -198,7 +211,7 @@ class DetailBarangMasukController extends Controller
         DB::beginTransaction();
         try {
             $findData->delete();
-            $this->updateStock($result->id_barang, $result->jumlah, 'remove');
+            $this->updateStock($result->id_barang, $result->jumlah, 'subtract');
             DB::commit();
             return responseJson(true, 'Data berhasil dihapus!');
         } catch (\Exception $e) {
