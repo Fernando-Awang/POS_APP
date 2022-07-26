@@ -19,8 +19,6 @@ class TabelReturPenjualan extends Migration
             $table->foreignId('id_barang')->nullable();
             $table->foreignId('id_user')->nullable();
             $table->integer('jumlah');
-            $table->integer('harga_satuan');
-            $table->integer('subtotal');
             $table->foreign('id_penjualan')->references('id')->on('penjualan')->cascadeOnDelete();
             $table->foreign('id_barang')->references('id')->on('barang')->cascadeOnDelete();
             $table->foreign('id_user')->references('id')->on('users')->cascadeOnDelete();
