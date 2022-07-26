@@ -20,6 +20,7 @@ class TabelDetailPenjualan extends Migration
             $table->integer('jumlah');
             $table->integer('harga_satuan');
             $table->integer('subtotal');
+            $table->integer('keuntungan')->nullable();
             $table->foreign('id_penjualan')->references('id')->on('penjualan')->cascadeOnDelete();
             $table->foreign('id_barang')->references('id')->on('barang')->cascadeOnDelete();
         });

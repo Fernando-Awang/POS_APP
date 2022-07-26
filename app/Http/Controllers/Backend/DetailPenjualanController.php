@@ -23,6 +23,7 @@ class DetailPenjualanController extends Controller
             'id_barang',
             'jumlah',
             'harga_satuan',
+            'keuntungan',
             'subtotal',
         ];
     }
@@ -110,13 +111,15 @@ class DetailPenjualanController extends Controller
                 $dataMain[$key] = $value;
             }
         }
-        $dataMain['harga_satuan'] = $this->findBarang($dataMain['id_barang'])->harga_jual;
+        $dataBarang = $this->findBarang($dataMain['id_barang']);
+        $dataMain['harga_satuan'] = $dataBarang->harga_jual;
         $dataMain['subtotal'] = $dataMain['jumlah'] * $dataMain['harga_satuan'];
+        $dataMain['keuntungan'] = ($dataBarang->harga_jual - $dataBarang->harga_beli) * $dataMain['jumlah'];
         $dataMain['id_penjualan'] = $id_penjualan;
         DB::beginTransaction();
         try {
             $detailPenjualan = $this->mainModel->create($dataMain);
-            $this->updateStock($detailPenjualan->id_barang, $detailPenjualan->jumlah, 'add');
+            $this->updateStock($detailPenjualan->id_barang, $detailPenjualan->jumlah, 'subtract');
             DB::commit();
             return responseJson(true, 'Data berhasil ditambahkan!');
         } catch (\Exception $e) {
@@ -171,6 +174,9 @@ class DetailPenjualanController extends Controller
                 $this->updateStock($result->id_barang, $diff, $status);
             }
             $dataMain['id_barang'] = $result->id_barang;
+            $dataBarang = $this->findBarang($dataMain['id_barang']);
+            $dataMain['harga_satuan'] = $dataBarang->harga_jual;
+            $dataMain['keuntungan'] = ($dataBarang->harga_jual - $dataBarang->harga_beli) * $dataMain['jumlah'];
             $dataMain['subtotal'] = $dataMain['harga_satuan'] * $jumlah;
             if (count($dataMain) > 0) {
                 $detailPenjualan = $findData->update($dataMain);

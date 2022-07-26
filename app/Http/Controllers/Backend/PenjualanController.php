@@ -37,6 +37,7 @@ class PenjualanController extends Controller
             'jumlah',
             'harga_satuan',
             'subtotal',
+            'keuntungan',
         ];
     }
     private function getAllMainModel()
@@ -161,8 +162,10 @@ class PenjualanController extends Controller
             if (isset($request->detail_penjualan)) {
                 $dataDetail = collect($request->detail_penjualan)->map(function ($var) use ($dataBarangMasuk) {
                     $var['id_penjualan'] = $dataBarangMasuk->id;
-                    $var['harga_satuan'] = $this->findBarang($var['id_barang'])->harga_jual;
+                    $dataBarang = $this->findBarang($var['id_barang']);
+                    $var['harga_satuan'] = $dataBarang->harga_jual;
                     $var['subtotal'] = $var['jumlah'] * $var['harga_satuan'];
+                    $var['keuntungan'] = ($dataBarang->harga_jual - $dataBarang->harga_beli) * $var['jumlah'];
                     return $var;
                 })->toArray();
                 $this->detailModel->insert($dataDetail);
