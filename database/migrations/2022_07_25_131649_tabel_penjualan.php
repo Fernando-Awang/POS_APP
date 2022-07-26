@@ -20,6 +20,7 @@ class TabelPenjualan extends Migration
             $table->foreignId('id_pelanggan')->nullable();
             $table->dateTime('tanggal');
             $table->string('keterangan')->nullable();
+            $table->enum('retur', ['true', 'false'])->nullable()->default('false');
             $table->foreign('id_user')->references('id')->on('users')->cascadeOnDelete();
             $table->foreign('id_pelanggan')->references('id')->on('pelanggan')->cascadeOnDelete();
         });
