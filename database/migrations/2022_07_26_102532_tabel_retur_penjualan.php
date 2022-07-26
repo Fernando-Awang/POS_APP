@@ -2,6 +2,7 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 class TabelReturPenjualan extends Migration
@@ -18,6 +19,7 @@ class TabelReturPenjualan extends Migration
             $table->foreignId('id_penjualan')->nullable();
             $table->foreignId('id_barang')->nullable();
             $table->foreignId('id_user')->nullable();
+            $table->dateTime('tanggal')->default(DB::raw('CURRENT_TIMESTAMP'));
             $table->integer('jumlah');
             $table->foreign('id_penjualan')->references('id')->on('penjualan')->cascadeOnDelete();
             $table->foreign('id_barang')->references('id')->on('barang')->cascadeOnDelete();

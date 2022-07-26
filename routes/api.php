@@ -8,6 +8,7 @@ use App\Http\Controllers\Backend\DetailPenjualanController;
 use App\Http\Controllers\Backend\KategoriBarangController;
 use App\Http\Controllers\Backend\PelangganController;
 use App\Http\Controllers\Backend\PenjualanController;
+use App\Http\Controllers\Backend\ReturPenjualanController;
 use App\Http\Controllers\Backend\SupplierController;
 use App\Http\Controllers\Backend\UserController;
 use App\Http\Controllers\TestController;
@@ -39,5 +40,6 @@ Route::middleware('auth:sanctum')->group(function(){
     Route::resource('barang-masuk/{id_barang_masuk}/detail', DetailBarangMasukController::class)->except('create', 'edit');
     Route::resource('penjualan', PenjualanController::class)->except('create', 'edit');
     Route::resource('penjualan/{id_penjualan}/detail', DetailPenjualanController::class)->except('create', 'edit');
+    Route::resource('penjualan/{id_penjualan}/retur', ReturPenjualanController::class)->except('create', 'edit');
 });
 
