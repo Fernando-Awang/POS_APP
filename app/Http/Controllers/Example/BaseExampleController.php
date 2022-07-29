@@ -65,7 +65,7 @@ class BaseExampleController extends Controller
     // ==================== crud function ======================================================
     public function index()
     {
-        $data = $this->getAllMainModel()->get();
+        $data = $this->getData()->get();
         $data = $this->mapData($data);
         return responseJson(true, 'data list', $data);
     }
@@ -116,8 +116,14 @@ class BaseExampleController extends Controller
         if (!$validasi['status']) {
             return responseJson(false, 'validasi error', $validasi['message'], 500);
         }
-        $data = $request->except('_token');
-        // $data = $request->all($this->fillableMainModel);
+        // $dataRequest = $request->except('_token');
+        $dataRequest = $request->all($this->fillableMainModel);
+        $data = [];
+        foreach ($dataRequest as $key => $value) {
+            if ($value != null && $value != '') {
+                $data[$key] = $value;
+            }
+        }
         DB::beginTransaction();
         try {
             $findData->update($data);
