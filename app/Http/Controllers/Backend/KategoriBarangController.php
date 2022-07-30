@@ -50,7 +50,7 @@ class KategoriBarangController extends Controller
         }
         $validator = Validator::make($request->all(), $validate, $messages);
         if ($validator->fails()) {
-            $result['message'] = $validator->errors()->all();
+            $result['message'] = $validator->errors();
             return $result;
         }
         $result['status'] = true;

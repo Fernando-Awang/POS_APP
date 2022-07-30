@@ -63,7 +63,7 @@ class UserController extends Controller
         }
         $validator = Validator::make($request->all(), $validate);
         if ($validator->fails()) {
-            $result['message'] = $validator->errors()->all();
+            $result['message'] = $validator->errors();
             return $result;
         }
         $result['status'] = true;

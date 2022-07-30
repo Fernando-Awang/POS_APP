@@ -42,11 +42,13 @@ class PelangganController extends Controller
         $result['status'] = false;
         if ($type == 'store') {
             $validate['nama'] = 'required';
-            $validate['telp'] = 'required';
+            $validate['telp'] = 'required|max:15|numeric';
             $validate['alamat'] = 'required';
 
             $messages['nama.required'] = 'Nama tidak boleh kosong';
             $messages['telp.required'] = 'Telepon tidak boleh kosong';
+            $messages['telp.max'] = 'Telepon tidak boleh lebih dari 15 karakter';
+            $messages['telp.numeric'] = 'Telepon hanya angka';
             $messages['alamat.required'] = 'Alamat tidak boleh kosong';
         }
         if ($type == 'update') {
@@ -57,7 +59,7 @@ class PelangganController extends Controller
         }
         $validator = Validator::make($request->all(), $validate, $messages);
         if ($validator->fails()) {
-            $result['message'] = $validator->errors()->all();
+            $result['message'] = $validator->errors();
             return $result;
         }
         $result['status'] = true;
