@@ -20,9 +20,9 @@ class BaseExampleController extends Controller
         $this->fillableMainModel = [];
         $this->fillableDetailModel = [];
     }
-    private function getData($condition = null)
+    private function getData($model, $condition = null)
     {
-        $data = $this->mainModel;
+        $data = $model;
         // $data = $data->with('');
         if ($condition != null) {
             $data = $data->where($condition);
@@ -34,10 +34,6 @@ class BaseExampleController extends Controller
         return collect($data)->map(function ($item) {
             return $item;
         });
-    }
-    private function getAllDetailModel($condition)
-    {
-        return $this->detailModel->where($condition);
     }
     private function validasiInput($request, $type = 'store')
     {
@@ -54,7 +50,7 @@ class BaseExampleController extends Controller
             $result['status'] = true;
             return $result;
         }
-        $validator = Validator::make($request->all(), $validate);
+        $validator = Validator::make($request->all(), $validate, $messages);
         if ($validator->fails()) {
             $result['message'] = $validator->errors();
             return $result;
@@ -65,7 +61,7 @@ class BaseExampleController extends Controller
     // ==================== crud function ======================================================
     public function index()
     {
-        $data = $this->getData()->get();
+        $data = $this->getData($this->mainModel)->get();
         $data = $this->mapData($data);
         return responseJson(true, 'data list', $data);
     }
@@ -96,7 +92,7 @@ class BaseExampleController extends Controller
     public function show($id)
     {
         $condition = ['id' => $id];
-        $findData = $this->getData($condition);
+        $findData = $this->getData($this->mainModel, $condition);
         $getData = $findData->get();
         $result = count($getData);
         if ($result == 0) {
@@ -107,7 +103,7 @@ class BaseExampleController extends Controller
     public function update(Request $request, $id)
     {
         $condition = ['id' => $id];
-        $findData = $this->getData($condition);
+        $findData = $this->getData($this->mainModel, $condition);
         $result = count($findData->get());
         if ($result == 0) {
             return responseJson(false, 'Data tidak ditemukan', null, 404);
@@ -137,7 +133,7 @@ class BaseExampleController extends Controller
     public function destroy($id)
     {
         $condition = ['id' => $id];
-        $findData = $this->getData($condition);
+        $findData = $this->getData($this->mainModel, $condition);
         $result = count($findData->get());
         if ($result == 0) {
             return responseJson(false, 'Data tidak ditemukan', null, 404);
