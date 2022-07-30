@@ -29,6 +29,12 @@ class BaseExampleController extends Controller
         }
         return $data;
     }
+    private function mapData($data)
+    {
+        return collect($data)->map(function ($item) {
+            return $item;
+        });
+    }
     private function getAllDetailModel($condition)
     {
         return $this->detailModel->where($condition);
@@ -55,12 +61,6 @@ class BaseExampleController extends Controller
         }
         $result['status'] = true;
         return $result;
-    }
-    private function mapData($data)
-    {
-        return collect($data)->map(function ($item) {
-            return $item;
-        });
     }
     // ==================== crud function ======================================================
     public function index()
