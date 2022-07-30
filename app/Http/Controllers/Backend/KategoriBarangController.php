@@ -18,7 +18,6 @@ class KategoriBarangController extends Controller
             'nama',
         ];
     }
-
     private function getData($condition = null)
     {
         $data = $this->mainModel;
@@ -49,7 +48,7 @@ class KategoriBarangController extends Controller
             $result['status'] = true;
             return $result;
         }
-        $validator = Validator::make($request->all(), $validate);
+        $validator = Validator::make($request->all(), $validate, $messages);
         if ($validator->fails()) {
             $result['message'] = $validator->errors()->all();
             return $result;
