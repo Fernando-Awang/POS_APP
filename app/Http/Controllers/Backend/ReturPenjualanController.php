@@ -211,6 +211,12 @@ class ReturPenjualanController extends Controller
         }
         $penjualan = $this->findPenjualan($id_penjualan);
         $detailPenjualan = $this->findDetailPenjualan($result->id_barang, ['id_penjualan' => $id_penjualan]);
+        if (count($penjualan->get()) == 0) {
+           return responseJson(false, 'data penjualan tidak ditemukan', [], 500);
+        }
+        if (count($detailPenjualan->get()) == 0) {
+           return responseJson(false, 'data detail penjualan tidak ditemukan', [], 500);
+        }
         $dataDetailPenjualan = $detailPenjualan->first();
         $dataRequestMain = $request->all($this->fillableMainModel);
         $dataMain = [];
@@ -278,12 +284,19 @@ class ReturPenjualanController extends Controller
             'id_penjualan' => $id_penjualan,
             'id' => $id
         ];
+        $penjualan = $this->findPenjualan($id_penjualan);
         $findData = $this->getOneMainModel($condition);
         $result = $findData->first();
         if (!isset($result->id)) {
             return responseJson(false, 'Data tidak ditemukan', null, 404);
         }
         $detailPenjualan = $this->findDetailPenjualan($result->id_barang, ['id_penjualan' => $id_penjualan]);
+        if (count($penjualan->get()) == 0) {
+           return responseJson(false, 'data penjualan tidak ditemukan', [], 500);
+        }
+        if (count($detailPenjualan->get()) == 0) {
+           return responseJson(false, 'data detail penjualan tidak ditemukan', [], 500);
+        }
         $dataDetailPenjualan = $detailPenjualan->first();
         DB::beginTransaction();
         try {
