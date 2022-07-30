@@ -47,9 +47,13 @@ class DetailPenjualanController extends Controller
         if ($status == 'subtract') {
             $newStock = $getCurrentData->stok - $diff;
         }
+        if ($newStock < 0) {
+            return false;
+        }
         $currentData->update([
             'stok' => $newStock,
         ]);
+        return true;
     }
     private function validasiInput($request, $type = 'store')
     {
@@ -112,6 +116,12 @@ class DetailPenjualanController extends Controller
             }
         }
         $dataBarang = $this->findBarang($dataMain['id_barang']);
+        if ($dataBarang->stok < $dataMain['jumlah']) {
+            return responseJson(false, 'Stok tidak mencukupi');
+        }
+        if ($dataMain['jumlah'] <= 0) {
+            return responseJson(false, 'Jumlah tidak boleh 0');
+        }
         $dataMain['harga_satuan'] = $dataBarang->harga_jual;
         $dataMain['subtotal'] = $dataMain['jumlah'] * $dataMain['harga_satuan'];
         $dataMain['keuntungan'] = ($dataBarang->harga_jual - $dataBarang->harga_beli) * $dataMain['jumlah'];
@@ -119,7 +129,11 @@ class DetailPenjualanController extends Controller
         DB::beginTransaction();
         try {
             $detailPenjualan = $this->mainModel->create($dataMain);
-            $this->updateStock($detailPenjualan->id_barang, $detailPenjualan->jumlah, 'subtract');
+            $updateStock = $this->updateStock($detailPenjualan->id_barang, $detailPenjualan->jumlah, 'subtract');
+            if (!$updateStock) {
+                DB::rollBack();
+                return responseJson(true, 'Stok tidak mencukupi');
+            }
             DB::commit();
             return responseJson(true, 'Data berhasil ditambahkan!');
         } catch (\Exception $e) {
@@ -171,7 +185,11 @@ class DetailPenjualanController extends Controller
                 if ($dataMain['jumlah'] < $result->jumlah) {
                     $diff = $result->jumlah - $dataMain['jumlah'];
                 }
-                $this->updateStock($result->id_barang, $diff, $status);
+                $updateStock = $this->updateStock($result->id_barang, $diff, $status);
+                if (!$updateStock) {
+                    DB::rollBack();
+                    return responseJson(true, 'Stok tidak mencukupi');
+                }
             }
             $dataMain['id_barang'] = $result->id_barang;
             $dataBarang = $this->findBarang($dataMain['id_barang']);
@@ -202,7 +220,11 @@ class DetailPenjualanController extends Controller
         DB::beginTransaction();
         try {
             $findData->delete();
-            $this->updateStock($result->id_barang, $result->jumlah, 'add');
+            $updateStock = $this->updateStock($result->id_barang, $result->jumlah, 'add');
+            if (!$updateStock) {
+                DB::rollBack();
+                return responseJson(true, 'Stok tidak mencukupi');
+            }
             DB::commit();
             return responseJson(true, 'Data berhasil dihapus!');
         } catch (\Exception $e) {
