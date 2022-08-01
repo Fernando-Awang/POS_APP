@@ -30,7 +30,13 @@ Route::get('unauthorize', function(){
 })->name('login');
 Route::post('login', [AuthController::class, 'login'])->name('auth');
 Route::middleware('auth:sanctum')->group(function(){
-    Route::get('test', [TestController::class, 'index']);
+    Route::middleware('staff.or.owner')->group(function(){
+        Route::get('test', [TestController::class, 'index']);
+    });
+    Route::middleware('staff')->group(function(){
+    });
+    Route::middleware('staff')->group(function(){
+    });
     Route::resource('kategori-barang', KategoriBarangController::class)->except('create', 'edit');
     Route::resource('barang', BarangController::class)->except('create', 'edit');
     Route::resource('supplier', SupplierController::class)->except('create', 'edit');
