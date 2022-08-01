@@ -50,9 +50,13 @@ class ReturPenjualanController extends Controller
         if ($status == 'subtract') {
             $newStock = $getCurrentData->stok - $diff;
         }
+        if ($newStock < 0) {
+            return false;
+        }
         $currentData->update([
             'stok' => $newStock,
         ]);
+        return true;
     }
     private function validasiInput($request, $type = 'store')
     {
@@ -71,7 +75,7 @@ class ReturPenjualanController extends Controller
         }
         $validator = Validator::make($request->all(), $validate);
         if ($validator->fails()) {
-            $result['message'] = $validator->errors()->all();
+            $result['message'] = $validator->errors();
             return $result;
         }
         $result['status'] = true;
@@ -127,16 +131,16 @@ class ReturPenjualanController extends Controller
         $penjualan = $this->findPenjualan($id_penjualan);
         $detailPenjualan = $this->findDetailPenjualan($request->id_barang, ['id_penjualan' => $id_penjualan]);
         $dataDetailPenjualan = $detailPenjualan->first();
-        // if (count($penjualan->get()) == 0) {
-        //    return responseJson(false, 'data penjualan tidak ditemukan', [], 500);
-        // }
-        // if (count($detailPenjualan->get()) == 0) {
-        //    return responseJson(false, 'data detail penjualan tidak ditemukan', [], 500);
-        // }
-        // $dataDetailPenjualan = $detailPenjualan->first();
-        // if ($dataDetailPenjualan->jumlah < $request->jumlah) {
-        //     return responseJson(false, 'jumlah barang tidak mencukupi', [], 500);
-        // }
+        if (count($penjualan->get()) == 0) {
+           return responseJson(false, 'data penjualan tidak ditemukan', [], 500);
+        }
+        if (count($detailPenjualan->get()) == 0) {
+           return responseJson(false, 'data detail penjualan tidak ditemukan', [], 500);
+        }
+        $dataDetailPenjualan = $detailPenjualan->first();
+        if ($dataDetailPenjualan->jumlah < $request->jumlah) {
+            return responseJson(false, 'jumlah barang tidak mencukupi', [], 500);
+        }
         $dataRequestMain = $request->all($this->fillableMainModel);
         $dataMain = [];
         foreach ($dataRequestMain as $key => $value) {
@@ -146,6 +150,9 @@ class ReturPenjualanController extends Controller
         }
         $dataMain['id_penjualan'] = $id_penjualan;
         $dataMain['id_user'] = userId();
+        if ($dataMain['jumlah'] <= 0) {
+            return responseJson(false, 'Jumlah tidak boleh 0 atau kurang dari 0');
+        }
         DB::beginTransaction();
         try {
             $query = $this->mainModel->create($dataMain);
@@ -161,7 +168,11 @@ class ReturPenjualanController extends Controller
                 'keuntungan' => ($dataDetailPenjualan->keuntungan / $dataDetailPenjualan->jumlah)  * $newJumlahDetailPenjualan,
             ]);
             // update stock
-            $this->updateStock($query->id_barang, $query->jumlah, 'add');
+            $updateStock = $this->updateStock($query->id_barang, $query->jumlah, 'add');
+            if (!$updateStock) {
+                DB::rollBack();
+                return responseJson(false, 'Stok tidak mencukupi');
+            }
             DB::commit();
             return responseJson(true, 'Data berhasil ditambahkan!');
         } catch (\Exception $e) {
@@ -200,6 +211,12 @@ class ReturPenjualanController extends Controller
         }
         $penjualan = $this->findPenjualan($id_penjualan);
         $detailPenjualan = $this->findDetailPenjualan($result->id_barang, ['id_penjualan' => $id_penjualan]);
+        if (count($penjualan->get()) == 0) {
+           return responseJson(false, 'data penjualan tidak ditemukan', [], 500);
+        }
+        if (count($detailPenjualan->get()) == 0) {
+           return responseJson(false, 'data detail penjualan tidak ditemukan', [], 500);
+        }
         $dataDetailPenjualan = $detailPenjualan->first();
         $dataRequestMain = $request->all($this->fillableMainModel);
         $dataMain = [];
@@ -207,6 +224,9 @@ class ReturPenjualanController extends Controller
             if ($value != null && $value != '') {
                 $dataMain[$key] = $value;
             }
+        }
+        if ($dataMain['jumlah'] <= 0) {
+            return responseJson(false, 'Jumlah tidak boleh 0 atau kurang dari 0');
         }
         $dataMain['id_barang'] = $result->id_barang;
         $status = 'add';
@@ -240,7 +260,11 @@ class ReturPenjualanController extends Controller
                         'keuntungan' => ($dataDetailPenjualan->keuntungan / $dataDetailPenjualan->jumlah)  * $newJumlahDetailPenjualan,
                     ]);
                     // update stock
-                    $this->updateStock($result->id_barang, $diff, $status);
+                    $updateStock = $this->updateStock($result->id_barang, $diff, $status);
+                    if (!$updateStock) {
+                        DB::rollBack();
+                        return responseJson(false, 'Stok tidak mencukupi');
+                    }
                 }
             }
             // update retur penjualan
@@ -260,12 +284,19 @@ class ReturPenjualanController extends Controller
             'id_penjualan' => $id_penjualan,
             'id' => $id
         ];
+        $penjualan = $this->findPenjualan($id_penjualan);
         $findData = $this->getOneMainModel($condition);
         $result = $findData->first();
         if (!isset($result->id)) {
             return responseJson(false, 'Data tidak ditemukan', null, 404);
         }
         $detailPenjualan = $this->findDetailPenjualan($result->id_barang, ['id_penjualan' => $id_penjualan]);
+        if (count($penjualan->get()) == 0) {
+           return responseJson(false, 'data penjualan tidak ditemukan', [], 500);
+        }
+        if (count($detailPenjualan->get()) == 0) {
+           return responseJson(false, 'data detail penjualan tidak ditemukan', [], 500);
+        }
         $dataDetailPenjualan = $detailPenjualan->first();
         DB::beginTransaction();
         try {
@@ -282,7 +313,11 @@ class ReturPenjualanController extends Controller
             if (count($dataReturPenjualan) > 0) {
                 $this->findPenjualan($id_penjualan)->update(['retur' => 'false']);
             }
-            $this->updateStock($result->id_barang, $result->jumlah, 'subtract');
+            $updateStock = $this->updateStock($result->id_barang, $result->jumlah, 'subtract');
+            if (!$updateStock) {
+                DB::rollBack();
+                return responseJson(false, 'Stok tidak mencukupi');
+            }
             DB::commit();
             return responseJson(true, 'Data berhasil dihapus!');
         } catch (\Exception $e) {

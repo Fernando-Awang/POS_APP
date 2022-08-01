@@ -24,23 +24,30 @@ class BarangController extends Controller
             'stok',
         ];
     }
-    private function getAllMainModel()
+    private function getData($condition = null)
     {
-        return $this->mainModel->with('kategori_barang');
-    }
-    private function getOneMainModel($condition)
-    {
-        return $this->mainModel->where($condition)->with('kategori_barang');
+        $data = $this->mainModel;
+        $data = $data->with('kategori_barang');
+        if ($condition != null) {
+            $data = $data->where($condition);
+        }
+        return $data;
     }
     private function validasiInput($request, $type = 'store')
     {
         $validate = [];
+        $message = [];
         $result['status'] = false;
         if ($type == 'store') {
             $validate['id_kategori_barang'] = 'required';
             $validate['nama'] = 'required';
             $validate['harga_jual'] = 'required';
             $validate['harga_beli'] = 'required';
+
+            $message['id_kategori_barang.required'] = 'Kategori barang harus diisi';
+            $message['nama.required'] = 'Nama barang harus diisi';
+            $message['harga_jual.required'] = 'Harga jual harus diisi';
+            $message['harga_beli.required'] = 'Harga beli harus diisi';
         }
         if ($type == 'update') {
         }
@@ -48,18 +55,28 @@ class BarangController extends Controller
             $result['status'] = true;
             return $result;
         }
-        $validator = Validator::make($request->all(), $validate);
+        $validator = Validator::make($request->all(), $validate,);
         if ($validator->fails()) {
-            $result['message'] = $validator->errors()->all();
+            $result['message'] = $validator->errors();
             return $result;
         }
         $result['status'] = true;
         return $result;
     }
+    private function mapData($data)
+    {
+        return collect($data)->map(function ($item) {
+            $item->harga_jual_format = formatRupiah($item->harga_jual);
+            $item->harga_beli_format = formatRupiah($item->harga_beli);
+            $item->stok = $item->stok;
+            return $item;
+        });
+    }
     // ==================== crud function ======================================================
     public function index()
     {
-        $data = $this->getAllMainModel()->get();
+        $data = $this->getData()->get();
+        $data = $this->mapData($data);
         return responseJson(true, 'data list', $data);
     }
     public function store(Request $request)
@@ -89,19 +106,20 @@ class BarangController extends Controller
     public function show($id)
     {
         $condition = ['id' => $id];
-        $findData = $this->getOneMainModel($condition);
-        $result = $findData->first();
-        if (!isset($result->id)) {
+        $findData = $this->getData($condition);
+        $getData = $findData->get();
+        $result = count($getData);
+        if ($result == 0) {
             return responseJson(false, 'Data tidak ditemukan', null, 404);
         }
-        return responseJson(true, 'data', $result);
+        return responseJson(true, 'data', $this->mapData($getData)->first());
     }
     public function update(Request $request, $id)
     {
         $condition = ['id' => $id];
-        $findData = $this->getOneMainModel($condition);
-        $result = $findData->first();
-        if (!isset($result->id)) {
+        $findData = $this->getData($condition);
+        $result = count($findData->get());
+        if ($result == 0) {
             return responseJson(false, 'Data tidak ditemukan', null, 404);
         }
         $validasi = $this->validasiInput($request, 'update');
@@ -118,9 +136,7 @@ class BarangController extends Controller
         }
         DB::beginTransaction();
         try {
-            if (count($data) > 0) {
-                $findData->update($data);
-            }
+            $findData->update($data);
             DB::commit();
             return responseJson(true, 'Data berhasil diubah!');
         } catch (\Exception $e) {
@@ -131,9 +147,9 @@ class BarangController extends Controller
     public function destroy($id)
     {
         $condition = ['id' => $id];
-        $findData = $this->getOneMainModel($condition);
-        $result = $findData->first();
-        if (!isset($result->id)) {
+        $findData = $this->getData($condition);
+        $result = count($findData->get());
+        if ($result == 0) {
             return responseJson(false, 'Data tidak ditemukan', null, 404);
         }
         DB::beginTransaction();

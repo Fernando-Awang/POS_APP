@@ -20,24 +20,29 @@ class BaseExampleController extends Controller
         $this->fillableMainModel = [];
         $this->fillableDetailModel = [];
     }
-    private function getAllMainModel()
+    private function getData($model, $condition = null)
     {
-        return $this->mainModel->with('detail_user');
+        $data = $model;
+        // $data = $data->with('');
+        if ($condition != null) {
+            $data = $data->where($condition);
+        }
+        return $data;
     }
-    private function getOneMainModel($condition)
+    private function mapData($data)
     {
-        return $this->mainModel->where($condition)->with('detail_user');
-    }
-    private function getAllDetailModel($condition)
-    {
-        return $this->detailModel->where($condition);
+        return collect($data)->map(function ($item) {
+            return $item;
+        });
     }
     private function validasiInput($request, $type = 'store')
     {
         $validate = [];
+        $messages = [];
         $result['status'] = false;
         if ($type == 'store') {
             $validate['input'] = 'required';
+            $messages['input.required'] = '___ tidak boleh kosong';
         }
         if ($type == 'update') {
         }
@@ -45,9 +50,9 @@ class BaseExampleController extends Controller
             $result['status'] = true;
             return $result;
         }
-        $validator = Validator::make($request->all(), $validate);
+        $validator = Validator::make($request->all(), $validate, $messages);
         if ($validator->fails()) {
-            $result['message'] = $validator->errors()->all();
+            $result['message'] = $validator->errors();
             return $result;
         }
         $result['status'] = true;
@@ -56,7 +61,8 @@ class BaseExampleController extends Controller
     // ==================== crud function ======================================================
     public function index()
     {
-        $data = $this->getAllMainModel()->get();
+        $data = $this->getData($this->mainModel)->get();
+        $data = $this->mapData($data);
         return responseJson(true, 'data list', $data);
     }
     public function store(Request $request)
@@ -65,8 +71,14 @@ class BaseExampleController extends Controller
         if (!$validasi['status']) {
             return responseJson(false, 'validasi error', $validasi['message'], 500);
         }
-        $data = $request->except('_token');
-        // $data = $request->all($this->fillableMainModel);
+        // $dataRequest = $request->except('_token');
+        $dataRequest = $request->all($this->fillableMainModel);
+        $data = [];
+        foreach ($dataRequest as $key => $value) {
+            if ($value != null && $value != '') {
+                $data[$key] = $value;
+            }
+        }
         DB::beginTransaction();
         try {
             $this->mainModel->create($data);
@@ -80,27 +92,34 @@ class BaseExampleController extends Controller
     public function show($id)
     {
         $condition = ['id' => $id];
-        $findData = $this->getOneMainModel($condition);
-        $result = $findData->first();
-        if (!isset($result->id)) {
+        $findData = $this->getData($this->mainModel, $condition);
+        $getData = $findData->get();
+        $result = count($getData);
+        if ($result == 0) {
             return responseJson(false, 'Data tidak ditemukan', null, 404);
         }
-        return responseJson(true, 'data', $result);
+        return responseJson(true, 'data', $this->mapData($getData)->first());
     }
     public function update(Request $request, $id)
     {
         $condition = ['id' => $id];
-        $findData = $this->getOneMainModel($condition);
-        $result = $findData->first();
-        if (!isset($result->id)) {
+        $findData = $this->getData($this->mainModel, $condition);
+        $result = count($findData->get());
+        if ($result == 0) {
             return responseJson(false, 'Data tidak ditemukan', null, 404);
         }
         $validasi = $this->validasiInput($request, 'update');
         if (!$validasi['status']) {
             return responseJson(false, 'validasi error', $validasi['message'], 500);
         }
-        $data = $request->except('_token');
-        // $data = $request->all($this->fillableMainModel);
+        // $dataRequest = $request->except('_token');
+        $dataRequest = $request->all($this->fillableMainModel);
+        $data = [];
+        foreach ($dataRequest as $key => $value) {
+            if ($value != null && $value != '') {
+                $data[$key] = $value;
+            }
+        }
         DB::beginTransaction();
         try {
             $findData->update($data);
@@ -114,9 +133,9 @@ class BaseExampleController extends Controller
     public function destroy($id)
     {
         $condition = ['id' => $id];
-        $findData = $this->getOneMainModel($condition);
-        $result = $findData->first();
-        if (!isset($result->id)) {
+        $findData = $this->getData($this->mainModel, $condition);
+        $result = count($findData->get());
+        if ($result == 0) {
             return responseJson(false, 'Data tidak ditemukan', null, 404);
         }
         DB::beginTransaction();

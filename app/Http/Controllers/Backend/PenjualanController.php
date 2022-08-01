@@ -61,9 +61,13 @@ class PenjualanController extends Controller
             if ($status != 'add') {
                 $newStock = $getCurrentData->stok - $value['jumlah'];
             }
+            if ($newStock < 0) {
+               return false;
+            }
             $currentData->update([
                 'stok' => $newStock,
             ]);
+            return true;
         }
     }
     private function findUser($id_user)
@@ -93,7 +97,7 @@ class PenjualanController extends Controller
         }
         $validator = Validator::make($request->all(), $validate);
         if ($validator->fails()) {
-            $result['message'] = $validator->errors()->all();
+            $result['message'] = $validator->errors();
             return $result;
         }
         $result['status'] = true;
@@ -169,7 +173,12 @@ class PenjualanController extends Controller
                     return $var;
                 })->toArray();
                 $this->detailModel->insert($dataDetail);
-                $this->updateStock($dataDetail, 'remove');
+                $updateStock = $this->updateStock($dataDetail, 'remove');
+                if (!$updateStock) {
+                    DB::rollBack();
+                    return responseJson(false, 'Stok tidak mencukupi');
+                }
+
             }
             DB::commit();
             return responseJson(true, 'Data berhasil ditambahkan!');
