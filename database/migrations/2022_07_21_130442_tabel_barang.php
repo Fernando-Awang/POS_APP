@@ -16,6 +16,7 @@ class TabelBarang extends Migration
         Schema::create('barang', function (Blueprint $table) {
             $table->id();
             $table->foreignId('id_kategori_barang')->nullable();
+            $table->char('kode_produk',20)->nullable()->unique();
             $table->string('nama');
             $table->integer('harga_jual')->nullable();
             $table->integer('harga_beli')->nullable();

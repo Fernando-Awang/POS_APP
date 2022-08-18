@@ -18,6 +18,7 @@ class BarangController extends Controller
         $this->mainModel = new \App\Models\Barang();
         $this->fillableMainModel = [
             'id_kategori_barang',
+            'kode_produk',
             'nama',
             'harga_jual',
             'harga_beli',
@@ -40,6 +41,7 @@ class BarangController extends Controller
         $result['status'] = false;
         if ($type == 'store') {
             $validate['id_kategori_barang'] = 'required';
+            $validate['kode_produk'] = 'required';
             $validate['nama'] = 'required';
             $validate['harga_jual'] = 'required';
             $validate['harga_beli'] = 'required';
