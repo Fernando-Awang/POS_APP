@@ -35,7 +35,7 @@ Route::middleware('auth:sanctum')->group(function(){
     });
     Route::middleware('staff')->group(function(){
     });
-    Route::middleware('staff')->group(function(){
+    Route::middleware('owner')->group(function(){
     });
     Route::resource('kategori-barang', KategoriBarangController::class)->except('create', 'edit');
     Route::resource('barang', BarangController::class)->except('create', 'edit');
